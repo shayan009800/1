@@ -1,0 +1,85 @@
+#!/bin/sh
+
+cd ~
+if [ -d /opt/echbay_vpssim ]; then
+rm -rf /opt/echbay_vpssim/*
+rm -rf /opt/echbay_vpssim
+sleep 2
+fi
+
+#
+sudo yum -y install wget nano
+
+#
+#nano /etc/selinux/config
+
+# check SELinux status
+selinuxenabled
+if [ $? -ne 0 ]; then 
+selinux_on_off="DISABLED"
+else
+selinux_on_off="ENABLED"
+fi
+echo "SELinux status: "$selinux_on_off
+
+# if SELinux enable -> disable SELinux
+if [ "$selinux_on_off" = "ENABLED" ]; then
+if [ -f /etc/selinux/config ]; then
+echo "=========================================================================="
+echo "Warning! php-fmp not install if SELinux enable"
+
+# neu truoc do da thu disable SELinux nhung khong thanh cong
+if [ -f /tmp/echbay_vpssim_disable_selinux ]; then
+echo "Please disable SELinux and re-instal..."
+echo "Using command:"
+echo "nano /etc/selinux/config"
+echo "find and replace:"
+echo "SELINUX="$(getenforce)
+echo "to:"
+echo "SELINUX=disabled"
+exit
+else
+echo "Auto disable SELinux in your VPS"
+fi
+
+#sudo chmod 777 /etc/selinux/config
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
+#sudo chmod 644 /etc/selinux/config
+
+#
+echo "ECHBAY-VPSSIM disable SELinux" > /tmp/echbay_vpssim_disable_selinux
+
+# check after change
+check_selinux_disable=$(grep SELINUX=disabled /etc/selinux/config)
+echo $check_selinux_disable
+
+# if change OK
+if [ ! "$check_selinux_disable" = "" ]; then
+echo ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+echo ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+echo ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+echo "Your VPS will been restart after 5s. . ."
+echo ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+echo ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+echo ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+echo "=========================================================================="
+sleep 5
+reboot
+else
+echo "Auto disble SELinux not working! Please disable SELinux and try again..."
+fi
+echo "=========================================================================="
+exit
+fi
+fi
+
+#
+cd ~
+wget --no-check-certificate -q https://raw.githubusercontent.com/itvn9online/vpssim-free/master/script/vpssim/menu/git-clone
+chmod +x /root/git-clone
+bash /root/git-clone
+
+cd /opt/echbay_vpssim
+chmod +x setup
+bash setup
